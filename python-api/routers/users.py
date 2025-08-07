@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from schemas.user import UserCreate, UserOut, UserLogin
-from schemas.error import ErrorResponse
-from database import SessionLocal
-from models.user import User
+from ..schemas.user import UserCreate, UserOut, UserLogin
+from ..schemas.error import ErrorResponse
+from ..database import SessionLocal
+from ..models.user import User
 from passlib.context import CryptContext
 from jose import jwt
 import uuid

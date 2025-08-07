@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from schemas.error import ErrorDetail, ErrorResponse
+from .schemas.error import ErrorDetail, ErrorResponse
 from datetime import datetime
 
 # Add error handlers to FastAPI app

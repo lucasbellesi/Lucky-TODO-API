@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from schemas.task import TaskCreate, TaskUpdate, TaskOut, PaginatedTasks
-from schemas.error import ErrorResponse
-from database import SessionLocal
-from models.task import Task, TaskStatus, TaskPriority
+from ..schemas.task import TaskCreate, TaskUpdate, TaskOut, PaginatedTasks
+from ..schemas.error import ErrorResponse
+from ..database import SessionLocal
+from ..models.task import Task, TaskStatus, TaskPriority
 from typing import List, Optional
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError

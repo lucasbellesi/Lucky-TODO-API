@@ -1,6 +1,6 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from schemas.error import ErrorDetail, ErrorResponse
+from ..schemas.error import ErrorDetail, ErrorResponse
 from datetime import datetime
 
 def format_error(code: str, message: str, details: dict = None, path: str = None):

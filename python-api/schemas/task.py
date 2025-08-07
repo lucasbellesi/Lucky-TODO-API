@@ -32,7 +32,7 @@ class TaskOut(TaskBase):
     createdAt: datetime
     updatedAt: Optional[datetime]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PaginatedTasks(BaseModel):
     tasks: list[TaskOut]
