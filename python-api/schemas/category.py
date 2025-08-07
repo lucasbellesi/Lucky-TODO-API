@@ -10,9 +10,12 @@ class CategoryBase(BaseModel):
 class CategoryCreate(CategoryBase):
     pass
 
+from pydantic import computed_field
+
 class CategoryOut(CategoryBase):
     id: uuid.UUID
-    createdAt: datetime
-    updatedAt: Optional[datetime]
+    createdAt: datetime = Field(..., alias="created_at")
+    updatedAt: Optional[datetime] = Field(None, alias="updated_at")
     class Config:
         from_attributes = True
+        populate_by_name = True

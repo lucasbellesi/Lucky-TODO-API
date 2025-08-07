@@ -44,7 +44,13 @@ def list_tasks(status: Optional[TaskStatus] = None, priority: Optional[TaskPrior
 
 @router.post("/", response_model=TaskOut, status_code=201, responses={400: {"model": ErrorResponse}})
 def create_task(task: TaskCreate, db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
-    db_task = Task(**task.dict(), user_id=user_id)
+    data = task.dict(exclude_unset=True)
+    # Mapear camelCase a snake_case
+    if "dueDate" in data:
+        data["due_date"] = data.pop("dueDate")
+    if "categoryId" in data:
+        data["category_id"] = data.pop("categoryId")
+    db_task = Task(**data, user_id=user_id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)

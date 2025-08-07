@@ -18,8 +18,8 @@ class TaskBase(BaseModel):
     description: Optional[str] = Field(None, max_length=500)
     status: Optional[TaskStatus] = TaskStatus.pending
     priority: Optional[TaskPriority] = TaskPriority.medium
-    dueDate: Optional[datetime]
-    categoryId: Optional[uuid.UUID]
+    dueDate: Optional[datetime] = None
+    categoryId: Optional[uuid.UUID] = None
 
 class TaskCreate(TaskBase):
     pass
@@ -29,10 +29,11 @@ class TaskUpdate(TaskBase):
 
 class TaskOut(TaskBase):
     id: uuid.UUID
-    createdAt: datetime
-    updatedAt: Optional[datetime]
+    createdAt: datetime = Field(..., alias="created_at")
+    updatedAt: Optional[datetime] = Field(None, alias="updated_at")
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class PaginatedTasks(BaseModel):
     tasks: list[TaskOut]
