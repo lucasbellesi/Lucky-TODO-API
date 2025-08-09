@@ -171,3 +171,8 @@ curl -X PATCH https://api.todoapp.com/v1/tasks/123 \
 3. **Flexible**: Optional features can be implemented as needed
 4. **Secure**: Robust authentication and input validation
 5. **Well-Documented**: Clear specifications for easy integration
+
+## License
+
+This project is licensed under the MIT License.  
+You are free to use, modify, and distribute it, as long as the original license and copyright notice are included.
