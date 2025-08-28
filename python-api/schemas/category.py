@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 import uuid
 from datetime import datetime
@@ -16,6 +16,4 @@ class CategoryOut(CategoryBase):
     id: uuid.UUID
     createdAt: datetime = Field(..., alias="created_at")
     updatedAt: Optional[datetime] = Field(None, alias="updated_at")
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)

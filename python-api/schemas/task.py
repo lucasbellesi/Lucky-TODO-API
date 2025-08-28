@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 import uuid
 from datetime import datetime
@@ -24,16 +24,19 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     pass
 
-class TaskUpdate(TaskBase):
-    pass
+class TaskUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = Field(None, max_length=500)
+    status: Optional[TaskStatus] = None
+    priority: Optional[TaskPriority] = None
+    dueDate: Optional[datetime] = None
+    categoryId: Optional[uuid.UUID] = None
 
 class TaskOut(TaskBase):
     id: uuid.UUID
     createdAt: datetime = Field(..., alias="created_at")
     updatedAt: Optional[datetime] = Field(None, alias="updated_at")
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class PaginatedTasks(BaseModel):
     tasks: list[TaskOut]

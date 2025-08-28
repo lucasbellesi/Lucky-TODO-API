@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from .schemas.error import ErrorDetail, ErrorResponse
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add error handlers to FastAPI app
 def add_error_handlers(app: FastAPI):
@@ -17,7 +17,7 @@ def add_error_handlers(app: FastAPI):
                 message=exc.detail,
                 details=None
             ),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             path=str(request.url.path)
         )
         return JSONResponse(status_code=exc.status_code, content=jsonable_encoder(err))
@@ -30,7 +30,7 @@ def add_error_handlers(app: FastAPI):
                 message="An unexpected error occurred.",
                 details=None
             ),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             path=str(request.url.path)
         )
         return JSONResponse(status_code=500, content=jsonable_encoder(err))

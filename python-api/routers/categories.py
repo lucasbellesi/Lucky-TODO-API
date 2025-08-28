@@ -17,7 +17,7 @@ def get_db():
 
 @router.post("/", response_model=CategoryOut, responses={400: {"model": ErrorResponse}})
 def create_category(category: CategoryCreate, db: Session = Depends(get_db)):
-    db_category = Category(**category.dict())
+    db_category = Category(**category.model_dump())
     db.add(db_category)
     db.commit()
     db.refresh(db_category)
