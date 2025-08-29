@@ -1,159 +1,107 @@
-# REST API for ToDo List Application
+# API REST de ToDo (Lista de tareas)
 
-## Overview
+## Resumen
 
-This API is designed to serve as the backend for a ToDo List Web Application. It allows users to register, authenticate, and manage their personal tasks efficiently. The API can be deployed locally on a personal computer, making it ideal for individual use, development, or self-hosted deployments. By integrating this API with a frontend web app, users can create, update, organize, and track their tasks securely and conveniently from their own environment.
+Backend para una aplicación de lista de tareas. Permite registrar usuarios, autenticarse con JWT y gestionar tareas personales (crear, listar, actualizar y eliminar). Pensada para ejecutarse localmente y/o integrarse con un frontend.
 
-## Base Endpoints
+## Base URL
 
 ```
-# Local (dev)
+# Desarrollo local
 http://localhost:8000
-
-# Example public base (docs examples)
-https://api.todoapp.com/v1
 ```
 
-## Authentication
+La especificación OpenAPI de referencia está en `docs/todo-openapi.yaml`. La documentación interactiva del servidor corre en `http://localhost:8000/docs` (Swagger UI).
 
-All endpoints (except `/auth/login` and `/auth/register`) require JWT authentication.
+## Autenticación
+
+- Autenticación mediante JWT Bearer.
+- Rutas públicas: `POST /auth/register`, `POST /auth/login`.
+- El resto de rutas requieren `Authorization: Bearer <token>`.
 
 ## Endpoints
 
-### Authentication
+### Autenticación
 
-- **POST /auth/register**
-  ```json
-  {
-    "username": "string",
-    "email": "string",
-    "password": "string"
-  }
-  ```
-  - Returns `201 Created` with `Location` header
-  - Response body:
+- POST `/auth/register`
+  - Cuerpo JSON:
     ```json
-    {
-      "id": "string",
-      "username": "string",
-      "email": "string"
-    }
+    { "email": "string", "password": "string", "username": "string" }
     ```
+  - Respuestas: `201 Created` con el usuario creado. Puede incluir cabecera `Location` informativa.
 
-- **POST /auth/login**
+- POST `/auth/login`
   - Content-Type: `application/x-www-form-urlencoded` (OAuth2PasswordRequestForm)
-  - Body fields:
+  - Campos del body:
     - `username`: email del usuario
     - `password`: contraseña
-  - Returns `200 OK` with:
+  - `200 OK` con:
     ```json
-    {
-      "accessToken": "jwt...",
-      "refreshToken": "jwt...",
-      "expiresIn": 1800
-    }
+    { "accessToken": "jwt...", "refreshToken": "jwt...", "expiresIn": 1800 }
     ```
 
-### Tasks
+### Tareas
 
-- **GET /tasks**
-  - Parameters: `status`, `dueDate`, `priority`, `limit`, `offset`
-  - Returns `200 OK` with:
+- GET `/tasks`
+  - Query params soportados: `status`, `priority`, `limit`, `offset`
+  - `status`: `pending | completed`
+  - `priority`: `low | medium | high`
+  - `200 OK` con `{ tasks: [...], pagination: { total, limit, offset } }`
+
+- POST `/tasks`
+  - Requiere `Authorization: Bearer <token>`
+  - Cuerpo JSON (campos opcionales salvo `title`):
     ```json
-    {
-      "tasks": [
-        {
-          "id": "string",
-          "title": "string",
-          "description": "string",
-          "dueDate": "YYYY-MM-DD",
-          "priority": "low/medium/high",
-          "status": "pending/completed",
-          "createdAt": "ISO8601",
-          "updatedAt": "ISO8601"
-        }
-      ],
-      "pagination": {
-        "total": 100,
-        "limit": 10,
-        "offset": 0
-      }
-    }
+    { "title": "string", "description": "string", "dueDate": "2025-12-31T23:59:59Z", "priority": "medium", "categoryId": "<uuid>" }
     ```
+  - `201 Created` con la tarea creada
 
-- **POST /tasks**
-  - Returns `201 Created` with location header
-  - Body:
-    ```json
-    {
-      "title": "string",
-      "description": "string",
-      "dueDate": "YYYY-MM-DD",
-      "priority": "low/medium/high"
-    }
+- GET `/tasks/{id}`
+  - `200 OK` con la tarea
+
+- PUT `/tasks/{id}`
+  - Actualiza la tarea (esta implementación acepta actualización parcial vía `PUT`).
+  - `200 OK` con la tarea actualizada
+
+- PATCH `/tasks/{id}/complete`
+  - Marca la tarea como completada.
+  - `200 OK` con la tarea actualizada
+
+- DELETE `/tasks/{id}`
+  - `204 No Content`
+
+### Categorías
+
+- POST `/categories/` (sin autenticación)
+  - ```json
+    { "name": "string", "color": "#rrggbb" }
     ```
+  - `201 Created`
 
-- **GET /tasks/{id}**
-  - Returns `200 OK` with full task resource
+- GET `/categories/` (sin autenticación)
+  - `200 OK` con la lista de categorías
 
-- **PUT /tasks/{id}**
-  - Full resource update
-  - Returns `200 OK` with updated resource
+## Códigos HTTP
 
-- **PATCH /tasks/{id}**
-  - Partial updates including status changes
-  - Example:
-    ```json
-    {"status": "completed"}
-    ```
-  - Returns `200 OK` with updated resource
-
-- **DELETE /tasks/{id}**
-  - Returns `204 No Content`
-
-### Categories (Optional)
-
-- **GET /categories**
-  - Returns `200 OK` with category list
-
-- **POST /categories**
-  - Returns `201 Created`
-  - Body:
-    ```json
-    {
-      "name": "string",
-      "color": "hexColor"
-    }
-    ```
-
-- **POST /tasks/{id}/categories**
-  - Assigns category
-  - Returns `204 No Content`
-
-## HTTP Status Codes
-
-- 200 OK - Successful GET/PUT/PATCH
-- 201 Created - Resource created
-- 204 No Content - Successful DELETE
+- 200 OK — Operación exitosa
+- 201 Created — Recurso creado
+- 204 No Content — Eliminación exitosa
 - 400 Bad Request
 - 401 Unauthorized
 - 403 Forbidden
 - 404 Not Found
 - 500 Internal Server Error
 
-## Advanced Features
+## Estado y características
 
-1. **Pagination**: Built-in support via `limit` and `offset`
-2. **Search**: Dedicated search endpoint with full-text capabilities
-3. **Sorting**: Field-based sorting in all list endpoints
-4. **Rate Limiting**: Protection against excessive requests
-5. **Comprehensive Validation**: All inputs rigorously validated
-6. **Clean Architecture**: Proper separation of concerns
-7. **Detailed Documentation**: Complete with examples
+- Paginación: `limit` y `offset` en listados.
+- Validación: Esquemas Pydantic para entradas/salidas.
+- Errores: Respuesta consistente con `error`, `timestamp`, `path`.
+- No implementado (aún): búsqueda por texto, ordenamiento, rate limiting.
 
 ## Cómo usar la API (curl)
 
-Ejemplos usando `http://localhost:8000`:
+Usando `http://localhost:8000`:
 
 ```bash
 # 1) Registrar usuario
@@ -170,7 +118,7 @@ ACCESS_TOKEN=$(\
 )
 echo "TOKEN=$ACCESS_TOKEN"
 
-# 3) Crear categoría
+# 3) Crear categoría (no requiere auth)
 curl -s -X POST http://localhost:8000/categories/ \
   -H "Content-Type: application/json" \
   -d '{"name":"Work","color":"#ff0000"}'
@@ -217,26 +165,29 @@ curl -s -X DELETE http://localhost:8000/tasks/$TASK_ID \
 python -m pip install -r python-api/requirements.txt
 ```
 
-2) Variables de entorno (opcional en dev)
-
-- Crear `python-api/.env` con por lo menos:
+2) Variables de entorno (crear `python-api/.env`)
 
 ```
 SECRET_KEY=change-me
-# DATABASE_URL=sqlite:///./todo.db   # valor por defecto
+# DATABASE_URL=sqlite:///./todo.db   # por defecto usa SQLite local
+# ACCESS_TOKEN_EXPIRE_MINUTES=30     # por defecto 30 minutos
 ```
 
 3) Levantar el servidor
 
-Debido a que el paquete se llama `python-api` (con guion), el nombre de import válido es `python_api`. Para desarrollo rápido, podés usar este comando que crea un alias temporal y lanza Uvicorn:
+El directorio del paquete es `python-api` (con guion). Como workaround, este comando crea un alias `python_api` y lanza Uvicorn en modo recarga:
 
 ```
 python -c "import types,sys,pathlib;pkg=types.ModuleType('python_api');pkg.__path__=[str(pathlib.Path('python-api').resolve())];sys.modules['python_api']=pkg;import uvicorn;uvicorn.run('python_api.main:app', host='0.0.0.0', port=8000, reload=True)"
 ```
 
-Luego abrí `http://localhost:8000/docs` para probar.
+Luego abre `http://localhost:8000/docs`.
 
-Sugerencia: a futuro, renombrar `python-api/` a `app/` o `python_api/` para evitar el alias.
+Sugerencia futura: renombrar `python-api/` a `python_api/` para evitar el alias temporal.
+
+## CORS
+
+Se permiten orígenes `http://localhost:5173` y `http://127.0.0.1:5173` por defecto (ajustable en `python-api/main.py`).
 
 ## Ejecutar tests
 
@@ -244,15 +195,9 @@ Sugerencia: a futuro, renombrar `python-api/` a `app/` o `python_api/` para evit
 python -m pytest -q
 ```
 
-## Implementation Notes
+## Notas de implementación
 
-1. **Production Ready**: Designed for scalability and maintainability
-2. **Consistent Patterns**: Uniform approach across all endpoints
-3. **Flexible**: Optional features can be implemented as needed
-4. **Secure**: Robust authentication and input validation
-5. **Well-Documented**: Clear specifications for easy integration
+- SQLAlchemy + SQLite por defecto (archivo `todo.db`).
+- Migraciones no incluidas; el esquema se crea al iniciar la app.
+- Estructura por routers: `auth`, `tasks`, `categories`.
 
-## License
-
-This project is licensed under the MIT License.  
-You are free to use, modify, and distribute it, as long as the original license and copyright notice are included.
