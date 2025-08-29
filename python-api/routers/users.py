@@ -36,8 +36,11 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
-@router.post("/register", response_model=UserOut, responses={400: {"model": ErrorResponse}})
-def register(user: UserCreate, db: Session = Depends(get_db)):
+from fastapi import Response
+
+
+@router.post("/register", response_model=UserOut, status_code=201, responses={400: {"model": ErrorResponse}})
+def register(user: UserCreate, db: Session = Depends(get_db), response: Response = None):
     if db.query(User).filter(User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
     db_user = User(
@@ -48,6 +51,12 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    try:
+        # Provide a Location header for the created resource (informational)
+        if response is not None:
+            response.headers["Location"] = f"/auth/users/{db_user.id}"
+    except Exception:
+        pass
     return db_user
 
 @router.post("/login", responses={200: {"description": "Authentication successful"}, 401: {"model": ErrorResponse}})

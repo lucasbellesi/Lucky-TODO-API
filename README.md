@@ -7,6 +7,10 @@ This API is designed to serve as the backend for a ToDo List Web Application. It
 ## Base Endpoints
 
 ```
+# Local (dev)
+http://localhost:8000
+
+# Example public base (docs examples)
 https://api.todoapp.com/v1
 ```
 
@@ -26,7 +30,7 @@ All endpoints (except `/auth/login` and `/auth/register`) require JWT authentica
     "password": "string"
   }
   ```
-  - Returns `201 Created` with location header
+  - Returns `201 Created` with `Location` header
   - Response body:
     ```json
     {
@@ -37,17 +41,16 @@ All endpoints (except `/auth/login` and `/auth/register`) require JWT authentica
     ```
 
 - **POST /auth/login**
-  ```json
-  {
-    "email": "string",
-    "password": "string"
-  }
-  ```
+  - Content-Type: `application/x-www-form-urlencoded` (OAuth2PasswordRequestForm)
+  - Body fields:
+    - `username`: email del usuario
+    - `password`: contraseña
   - Returns `200 OK` with:
     ```json
     {
-      "token": "string",
-      "expiresIn": 3600
+      "accessToken": "jwt...",
+      "refreshToken": "jwt...",
+      "expiresIn": 1800
     }
     ```
 
@@ -148,20 +151,97 @@ All endpoints (except `/auth/login` and `/auth/register`) require JWT authentica
 6. **Clean Architecture**: Proper separation of concerns
 7. **Detailed Documentation**: Complete with examples
 
-## Example Requests
+## Cómo usar la API (curl)
+
+Ejemplos usando `http://localhost:8000`:
 
 ```bash
-# Create task
-curl -X POST https://api.todoapp.com/v1/tasks \
+# 1) Registrar usuario
+curl -s -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <JWT_TOKEN>" \
-  -d '{"title":"Buy milk","description":"Skim milk","dueDate":"2023-12-31","priority":"medium"}'
+  -d '{"email":"alice@example.com","password":"password123","username":"alice"}'
 
-# Update task status
-curl -X PATCH https://api.todoapp.com/v1/tasks/123 \
+# 2) Login (form-encoded). username = email
+ACCESS_TOKEN=$(\
+  curl -s -X POST http://localhost:8000/auth/login \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "username=alice@example.com&password=password123" \
+  | python -c "import sys,json; print(json.load(sys.stdin)['accessToken'])" \
+)
+echo "TOKEN=$ACCESS_TOKEN"
+
+# 3) Crear categoría
+curl -s -X POST http://localhost:8000/categories/ \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <JWT_TOKEN>" \
-  -d '{"status":"completed"}'
+  -d '{"name":"Work","color":"#ff0000"}'
+
+# 4) Listar categorías
+curl -s http://localhost:8000/categories/
+
+# 5) Crear tarea
+curl -s -X POST http://localhost:8000/tasks/ \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "title":"Complete API documentation",
+        "description":"Write OpenAPI spec for Todo API",
+        "dueDate":"2025-12-31T23:59:59Z",
+        "priority":"medium"
+      }'
+
+# 6) Listar tareas con paginación y filtros
+curl -s "http://localhost:8000/tasks/?limit=20&offset=0&status=pending&priority=medium" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# 7) Obtener tarea por id
+TASK_ID="<uuid>"
+curl -s http://localhost:8000/tasks/$TASK_ID \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# 8) Marcar tarea como completa
+curl -s -X PATCH http://localhost:8000/tasks/$TASK_ID/complete \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+
+# 9) Eliminar tarea
+curl -s -X DELETE http://localhost:8000/tasks/$TASK_ID \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -i
+```
+
+## Ejecutar el servidor (dev)
+
+- Requisitos: Python 3.11+, `pip`.
+
+1) Instalar dependencias
+
+```
+python -m pip install -r python-api/requirements.txt
+```
+
+2) Variables de entorno (opcional en dev)
+
+- Crear `python-api/.env` con por lo menos:
+
+```
+SECRET_KEY=change-me
+# DATABASE_URL=sqlite:///./todo.db   # valor por defecto
+```
+
+3) Levantar el servidor
+
+Debido a que el paquete se llama `python-api` (con guion), el nombre de import válido es `python_api`. Para desarrollo rápido, podés usar este comando que crea un alias temporal y lanza Uvicorn:
+
+```
+python -c "import types,sys,pathlib;pkg=types.ModuleType('python_api');pkg.__path__=[str(pathlib.Path('python-api').resolve())];sys.modules['python_api']=pkg;import uvicorn;uvicorn.run('python_api.main:app', host='0.0.0.0', port=8000, reload=True)"
+```
+
+Luego abrí `http://localhost:8000/docs` para probar.
+
+Sugerencia: a futuro, renombrar `python-api/` a `app/` o `python_api/` para evitar el alias.
+
+## Ejecutar tests
+
+```
+python -m pytest -q
 ```
 
 ## Implementation Notes

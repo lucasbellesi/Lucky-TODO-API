@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from ..schemas.task import TaskCreate, TaskUpdate, TaskOut, PaginatedTasks
 from ..schemas.error import ErrorResponse
@@ -7,11 +7,10 @@ from ..models.task import Task, TaskStatus, TaskPriority
 from typing import List, Optional
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-import os
+from ..core.config import settings
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-SECRET_KEY = os.getenv("SECRET_KEY", "secret")
 ALGORITHM = "HS256"
 
 def get_db():
@@ -23,7 +22,7 @@ def get_db():
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid authentication")
@@ -32,7 +31,14 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Invalid authentication")
 
 @router.get("/", response_model=PaginatedTasks, responses={401: {"model": ErrorResponse}})
-def list_tasks(status: Optional[TaskStatus] = None, priority: Optional[TaskPriority] = None, limit: int = 20, offset: int = 0, db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
+def list_tasks(
+    status: Optional[TaskStatus] = None,
+    priority: Optional[TaskPriority] = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user),
+):
     query = db.query(Task).filter(Task.user_id == user_id)
     if status:
         query = query.filter(Task.status == status)
