@@ -7,15 +7,13 @@ from ..models.user import User
 from passlib.context import CryptContext
 from jose import jwt
 import uuid
-import os
 from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from ..core.config import settings
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = os.getenv("SECRET_KEY", "secret")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
 def get_db():
     db = SessionLocal()
@@ -32,9 +30,11 @@ def get_password_hash(password):
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 @router.post("/register", response_model=UserOut, responses={400: {"model": ErrorResponse}})
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -57,4 +57,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(status_code=401, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user.id})
     refresh_token = create_access_token(data={"sub": user.id, "type": "refresh"}, expires_delta=timedelta(days=7))
-    return {"accessToken": access_token, "refreshToken": refresh_token, "expiresIn": ACCESS_TOKEN_EXPIRE_MINUTES * 60}
+    return {
+        "accessToken": access_token,
+        "refreshToken": refresh_token,
+        "expiresIn": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    }
