@@ -1,9 +1,10 @@
 fastapi
 uvicorn[standard]
 sqlalchemy
-pydantic
+pydantic[email]
 python-dotenv
 passlib[bcrypt]
 python-jose[cryptography]
 pytest
 httpx
+python-multipart
