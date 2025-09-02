@@ -21,11 +21,6 @@ def test_client():
     os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"
     os.environ["SECRET_KEY"] = os.environ.get("SECRET_KEY", "test-secret-key")
 
-    # Ensure project root is on sys.path so 'python_api' is importable
-    project_root = pathlib.Path(__file__).resolve().parents[1]
-    if str(project_root) not in sys.path:
-        sys.path.insert(0, str(project_root))
-
     # Import app after env and alias are ready
     from importlib import import_module
 
