@@ -1,6 +1,5 @@
 import os
 import sys
-import types
 import pathlib
 import shutil
 import uuid
@@ -10,15 +9,6 @@ from fastapi.testclient import TestClient
 
 TEST_DB_PATH = pathlib.Path("test_todo.db")
 
-
-def _install_package_alias():
-    # Create a synthetic package alias so we can import "python_api"
-    # from the actual directory "python-api" (hyphen not importable).
-    repo_root = pathlib.Path(__file__).resolve().parents[1]
-    pkg_dir = repo_root / "python-api"
-    pkg = types.ModuleType("python_api")
-    pkg.__path__ = [str(pkg_dir)]  # type: ignore[attr-defined]
-    sys.modules["python_api"] = pkg
 
 
 @pytest.fixture(scope="session")
@@ -30,8 +20,6 @@ def test_client():
     # Configure test environment before importing the app
     os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"
     os.environ["SECRET_KEY"] = os.environ.get("SECRET_KEY", "test-secret-key")
-
-    _install_package_alias()
 
     # Import app after env and alias are ready
     from importlib import import_module

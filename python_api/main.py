@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
 from .routers import tasks, users, categories
-from .error_handlers import add_error_handlers
+from .core.error_handlers import add_error_handlers
 
 Base.metadata.create_all(bind=engine)
 
