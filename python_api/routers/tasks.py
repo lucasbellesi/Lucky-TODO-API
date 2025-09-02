@@ -51,18 +51,6 @@ def list_tasks(
 @router.post("/", response_model=TaskOut, status_code=201, responses={400: {"model": ErrorResponse}})
 def create_task(task: TaskCreate, db: Session = Depends(get_db), user_id: str = Depends(get_current_user)):
     data = task.model_dump(exclude_unset=True)
-    # Mapear camelCase a snake_case
-    if "dueDate" in data:
-        data["due_date"] = data.pop("dueDate")
-    if "categoryId" in data:
-        data["category_id"] = data.pop("categoryId")
-    # Convertir enums de esquema a enums del modelo
-    if "status" in data and data["status"] is not None:
-        val = data["status"]
-        data["status"] = TaskStatus(getattr(val, "value", val))
-    if "priority" in data and data["priority"] is not None:
-        val = data["priority"]
-        data["priority"] = TaskPriority(getattr(val, "value", val))
     db_task = Task(**data, user_id=user_id)
     db.add(db_task)
     db.commit()
@@ -82,18 +70,6 @@ def update_task(id: str, task_update: TaskUpdate, db: Session = Depends(get_db),
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     data = task_update.model_dump(exclude_unset=True)
-    # Mapear camelCase a snake_case para campos persistidos
-    if "dueDate" in data:
-        data["due_date"] = data.pop("dueDate")
-    if "categoryId" in data:
-        data["category_id"] = data.pop("categoryId")
-    # Convertir enums de esquema a enums del modelo
-    if "status" in data and data["status"] is not None:
-        val = data["status"]
-        data["status"] = TaskStatus(getattr(val, "value", val))
-    if "priority" in data and data["priority"] is not None:
-        val = data["priority"]
-        data["priority"] = TaskPriority(getattr(val, "value", val))
     for key, value in data.items():
         setattr(task, key, value)
     db.commit()

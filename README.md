@@ -162,10 +162,10 @@ curl -s -X DELETE http://localhost:8000/tasks/$TASK_ID \
 1) Instalar dependencias
 
 ```
-python -m pip install -r python-api/requirements.txt
+python -m pip install -r python_api/requirements.txt
 ```
 
-2) Variables de entorno (crear `python-api/.env`)
+2) Variables de entorno (crear `python_api/.env`)
 
 ```
 SECRET_KEY=change-me
@@ -175,19 +175,15 @@ SECRET_KEY=change-me
 
 3) Levantar el servidor
 
-El directorio del paquete es `python-api` (con guion). Como workaround, este comando crea un alias `python_api` y lanza Uvicorn en modo recarga:
-
 ```
-python -c "import types,sys,pathlib;pkg=types.ModuleType('python_api');pkg.__path__=[str(pathlib.Path('python-api').resolve())];sys.modules['python_api']=pkg;import uvicorn;uvicorn.run('python_api.main:app', host='0.0.0.0', port=8000, reload=True)"
+uvicorn python_api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Luego abre `http://localhost:8000/docs`.
 
-Sugerencia futura: renombrar `python-api/` a `python_api/` para evitar el alias temporal.
-
 ## CORS
 
-Se permiten orígenes `http://localhost:5173` y `http://127.0.0.1:5173` por defecto (ajustable en `python-api/main.py`).
+Se permiten orígenes `http://localhost:5173` y `http://127.0.0.1:5173` por defecto (ajustable en `python_api/main.py`).
 
 ## Ejecutar tests
 
